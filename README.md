@@ -1,5 +1,10 @@
 ### Hi there 👋
 
+Hi, i'm Ran. By day I am a web developer. By night I am a content creator who loves to learn new things and teach them to others.
+
+- Twitter: https://twitter.com/TgMrP
+- Instagram: https://www.instagram.com/ran.tayar
+
 <!--
 **TgMrP/TgMrP** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 
@@ -14,3 +19,11 @@ Here are some ideas to get you started:
 - 😄 Pronouns: ...
 - ⚡ Fun fact: ...
 -->
+![Ran's github stats](https://github-readme-stats.vercel.app/api?username=TgMrP)
+
+![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=TgMrP)
+
+![Rans's wakatime stats](https://github-readme-stats.vercel.app/api/wakatime?username=TgMRP)
+
+
+![visitors](https://visitor-badge.glitch.me/badge?page_id=page.id)
