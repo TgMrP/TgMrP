@@ -23,7 +23,7 @@ Here are some ideas to get you started:
 
 ![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=TgMrP)
 
-![Rans's wakatime stats](https://github-readme-stats.vercel.app/api/wakatime?username=TgMRP)
+![Rans's wakatime stats](https://github-readme-stats.vercel.app/api/wakatime?username=TgMrP)
 
 
 ![visitors](https://visitor-badge.glitch.me/badge?page_id=page.id)
