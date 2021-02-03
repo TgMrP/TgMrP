@@ -19,11 +19,8 @@ Here are some ideas to get you started:
 - 😄 Pronouns: ...
 - ⚡ Fun fact: ...
 -->
-![Ran's github stats](https://github-readme-stats.vercel.app/api?username=TgMrP)
 
-![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=TgMrP&layout=compact)
-
-![Rans's wakatime stats](https://github-readme-stats.vercel.app/api/wakatime?username=TgMrP&layout=compact)
-
-
-![visitors](https://ginger-plucky-pegasus.glitch.me/?id=TgMrP&)
+<img align="center" src="https://github-readme-stats.vercel.app/api?username=TgMrP" />
+<img align="center" src="https://github-readme-stats.vercel.app/api/top-langs/?username=TgMrP&layout=compact" />
+<img align="center" src="https://github-readme-stats.vercel.app/api/wakatime?username=TgMrP&layout=compact" />
+<img align="center" src="https://ginger-plucky-pegasus.glitch.me/?id=TgMrP&" />
