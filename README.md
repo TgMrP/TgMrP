@@ -21,7 +21,7 @@ Here are some ideas to get you started:
 -->
 ![Ran's github stats](https://github-readme-stats.vercel.app/api?username=TgMrP)
 
-![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=TgMrP)
+![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=TgMrP&layout=compact)
 
 ![Rans's wakatime stats](https://github-readme-stats.vercel.app/api/wakatime?username=TgMrP)
 
