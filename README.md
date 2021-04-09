@@ -4,7 +4,7 @@ Hi, i'm Ran. By day I am a web developer. By night I am a content creator who lo
 
 - Twitter: https://twitter.com/TgMrP
 - Instagram: https://www.instagram.com/ran.tayar
-
+- Linkedin: https://www.linkedin.com/in/rantayar/
 <!--
 **TgMrP/TgMrP** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 
@@ -18,7 +18,7 @@ Here are some ideas to get you started:
 - 📫 How to reach me: ...
 - 😄 Pronouns: ...
 - ⚡ Fun fact: ...
--->
+  -->
 
 <img align="center" src="https://github-readme-stats.vercel.app/api?username=TgMrP" />
 <img align="center" src="https://github-readme-stats.vercel.app/api/top-langs/?username=TgMrP&layout=compact" />
