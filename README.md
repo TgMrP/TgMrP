@@ -1,7 +1,5 @@
 ### Hi there 👋
 
-Hi, i'm Ran. By day I am a web developer. By night I am a content creator who loves to learn new things and teach them to others.
-
 - Instagram: https://www.instagram.com/ran.tayar
 - Linkedin: https://www.linkedin.com/in/rantayar/
 
