@@ -122,6 +122,7 @@ const springPresets = {
   snappy: { response: 0.22, damping: 0.8 },
   default: { response: 0.4, damping: 0.86 },
   heavy: { response: 0.5, damping: 1 },
+  roll: { response: 1.1, damping: 1 },
 }
 function springStep(tau, { response, damping: z }) {
   const w = (2 * Math.PI) / response
@@ -140,6 +141,39 @@ function springEasing(preset) {
 const motion = Object.fromEntries(Object.entries(springPresets).map(([name, preset]) => [name, springEasing(preset)]))
 const animate = (name, preset) => `animation: ${name} ${motion[preset].duration}s ${motion[preset].easing} both;`
 const delay = (seconds) => `style="animation-delay: ${seconds.toFixed(2)}s"`
+
+// Odometer numbers: every digit is a clipped column of 0-9 twice over that rolls one full turn onto its value,
+// rightmost digits first. Widths are estimates for tabular figures, so each glyph is centred in its own slot.
+let rollerId = 0
+const glyphWidth = (char) => (/\d/.test(char) ? 0.58 : /[,.]/.test(char) ? 0.3 : char === "%" ? 0.85 : char === " " ? 0.28 : 0.56)
+function rolling(value, { x, y, size, anchor = "middle", cls = "", at }) {
+  const [, number, suffix] = String(value).match(/^([\d,.]*)(.*)$/)
+  const numberWidth = [...number].reduce((sum, char) => sum + glyphWidth(char) * size, 0)
+  const suffixWidth = [...suffix].reduce((sum, char) => sum + glyphWidth(char) * size, 0)
+  const total = numberWidth + suffixWidth
+  let cursor = anchor === "middle" ? x - total / 2 : anchor === "end" ? x - total : x
+  const lineHeight = size * 1.25
+  const id = `roll${rollerId++}`
+  const digitCount = number.replace(/\D/g, "").length
+  let digitIndex = 0
+  const glyphs = [...number]
+    .map((char) => {
+      const w = glyphWidth(char) * size
+      const cx = cursor + w / 2
+      cursor += w
+      if (!/\d/.test(char)) return `<text class="${cls}" x="${cx.toFixed(1)}" y="${y}" text-anchor="middle">${char}</text>`
+      const fromRight = digitCount - 1 - digitIndex++
+      const column = Array.from({ length: 20 }, (_, k) => `<text class="${cls}" x="${cx.toFixed(1)}" y="${(y + k * lineHeight).toFixed(1)}" text-anchor="middle">${k % 10}</text>`).join("")
+      const shift = -(10 + Number(char)) * lineHeight
+      return `<g class="roll" style="transform: translateY(${shift.toFixed(1)}px); animation-delay: ${(at + fromRight * 0.07).toFixed(2)}s">${column}</g>`
+    })
+    .join("")
+  // SVG collapses a leading space, so step over it instead of rendering it.
+  const lead = suffix.length - suffix.trimStart().length
+  const tail = suffix ? `<text class="${cls}" x="${(cursor + lead * glyphWidth(" ") * size).toFixed(1)}" y="${y}">${suffix.trimStart()}</text>` : ""
+  const top = y - size * 0.92
+  return `<clipPath id="${id}"><rect x="${(cursor - numberWidth - size).toFixed(1)}" y="${top.toFixed(1)}" width="${(numberWidth + 2 * size).toFixed(1)}" height="${(size * 1.16).toFixed(1)}" /></clipPath><g clip-path="url(#${id})">${glyphs}</g>${tail}`
+}
 
 // One SVG for all cards, so they line up exactly instead of relying on how GitHub wraps side-by-side images.
 const width = 960
@@ -169,7 +203,7 @@ const streakColumnsSvg = streakColumns
   .map(([label, value, detail, extra = ""], i) => {
     const x = columnWidth * i + columnWidth / 2
     const divider = i ? `<line class="divider" x1="${columnWidth * i}" y1="52" x2="${columnWidth * i}" y2="128" />` : ""
-    return `${divider}<g class="type" ${delay(0.2 + i * 0.1)}><text class="big ${extra}" x="${x}" y="86" text-anchor="middle">${value}</text><text x="${x}" y="110" text-anchor="middle">${label}</text><text class="muted" x="${x}" y="128" text-anchor="middle">${detail}</text></g>`
+    return `${divider}${rolling(value, { x, y: 86, size: 30, cls: `big ${extra}`, at: 0.25 + i * 0.12 })}<g class="type" ${delay(0.35 + i * 0.12)}><text x="${x}" y="110" text-anchor="middle">${label}</text><text class="muted" x="${x}" y="128" text-anchor="middle">${detail}</text></g>`
   })
   .join("\n    ")
 
@@ -185,12 +219,21 @@ const strip = recent
     return `<rect class="cell l${level(contributionCount)}" x="${x}" y="150" width="${(cellStep - 3).toFixed(2)}" height="14" rx="3" ${delay(0.45 + i * 0.012)}><title>${date}: ${contributionCount}</title></rect>`
   })
   .join("")
+// Then a line is drawn under the days of the current streak.
+const streakCells = Math.min(current.length, recent.length)
+const underline = streakCells
+  ? (() => {
+      const x1 = 24 + (recent.length - streakCells) * cellStep
+      const x2 = 24 + recent.length * cellStep - 3
+      return `<line class="draw accent-stroke" x1="${x1.toFixed(1)}" y1="172" x2="${x2.toFixed(1)}" y2="172" pathLength="1" ${delay(1.35)} />`
+    })()
+  : ""
 
-const row = (label, value, y, inner, labelX = 24) =>
-  `<text x="${labelX}" y="${y}">${label}</text><text class="value" x="${inner - 24}" y="${y}" text-anchor="end">${value}</text>`
+const row = (label, value, y, inner, at, labelX = 24) =>
+  `<text x="${labelX}" y="${y}">${label}</text>${rolling(value, { x: inner - 24, y, size: 14, anchor: "end", cls: "value", at })}`
 
 const statsBody = stats
-  .map(([label, value], i) => `<g class="slide" ${delay(0.45 + i * 0.06)}>${row(label, value.toLocaleString("en-US"), 64 + i * rowHeight, half)}</g>`)
+  .map(([label, value], i) => `<g class="slide" ${delay(0.45 + i * 0.06)}>${row(label, value.toLocaleString("en-US"), 64 + i * rowHeight, half, 0.55 + i * 0.06)}</g>`)
   .join("\n    ")
 
 // The bar takes the first row's slot, so the legend rows line up with the stats rows next to it.
@@ -209,7 +252,7 @@ const legend = top
   .map(([name, { size, color }], i) => {
     const y = Math.round(86 + i * legendStep)
     const percent = `${((size / topTotal) * 100).toFixed(1)}%`
-    return `<circle class="pop" cx="29" cy="${y - 5}" r="5" fill="${color}" ${delay(0.6 + i * 0.06)} /><g class="slide" ${delay(0.5 + i * 0.06)}>${row(name, percent, y, half, 42)}</g>`
+    return `<circle class="pop" cx="29" cy="${y - 5}" r="5" fill="${color}" ${delay(0.6 + i * 0.06)} /><g class="slide" ${delay(0.5 + i * 0.06)}>${row(name, percent, y, half, 0.8 + i * 0.06, 42)}</g>`
   })
   .join("\n    ")
 
@@ -252,7 +295,7 @@ const prisms = yearDays
     const base = [[ox, oy], [ox + u[0], oy + u[1]], [ox + u[0] + v[0], oy + u[1] + v[1]], [ox + v[0], oy + v[1]]]
     const top = base.map(([x, y]) => [x, y - h])
     const face = (a, b) => [top[a], top[b], base[b], base[a]].map(point).join(" ")
-    return `<g class="prism" ${delay(0.35 + week * 0.018)}><title>${date}: ${contributionCount}</title><polygon class="s${l}" points="${face(1, 2)}" /><polygon class="f${l}" points="${face(2, 3)}" /><polygon class="l${l}" points="${top.map(point).join(" ")}" /></g>`
+    return `<g class="prism" ${delay(0.75 + (week + day * 1.5) * 0.02)}><title>${date}: ${contributionCount}</title><polygon class="s${l}" points="${face(1, 2)}" /><polygon class="f${l}" points="${face(2, 3)}" /><polygon class="l${l}" points="${top.map(point).join(" ")}" /></g>`
   })
   .join("")
 
@@ -277,6 +320,7 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${
       .title { fill: #4493f8; }
       .value, .big { fill: #f0f6fc; }
       .accent { fill: #3fb950; }
+      .accent-stroke { stroke: #3fb950; }
       .muted { fill: #6e7681; }
       .l0 { fill: #161b22; } .l1 { fill: #0e4429; } .l2 { fill: #006d32; } .l3 { fill: #26a641; } .l4 { fill: #39d353; }
       .f0 { fill: #10141a; } .f1 { fill: #0a3320; } .f2 { fill: #005226; } .f3 { fill: #1d7d31; } .f4 { fill: #2b9e3e; }
@@ -289,15 +333,21 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${
     .cell, .pop { transform-origin: center; ${animate("pop", "snappy")} }
     .grow { transform-origin: left center; ${animate("grow", "default")} }
     .prism { transform-origin: center bottom; ${animate("lift", "default")} }
+    .roll { ${animate("roll", "roll")} }
+    .roll text, .big, .value { font-variant-numeric: tabular-nums; }
+    .accent-stroke { stroke: #1a7f37; stroke-width: 3; stroke-linecap: round; }
+    .draw { stroke-dasharray: 1; ${animate("draw", "heavy")} }
     @keyframes rise { from { transform: translateY(16px); opacity: 0; } }
     @keyframes type { from { transform: translateY(10px); opacity: 0; } }
     @keyframes slide { from { transform: translateX(-10px); opacity: 0; } }
     @keyframes pop { from { transform: scale(0); } }
     @keyframes grow { from { transform: scaleX(0); } }
     @keyframes lift { from { transform: scaleY(0); } }
+    @keyframes roll { from { transform: translateY(0); } }
+    @keyframes draw { from { stroke-dashoffset: 1; } }
     @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
   </style>
-  ${panel({ x: 0, y: 0, width, height: streakHeight, title: "Contribution streak", at: 0, body: `${streakColumnsSvg}\n    ${strip}` })}
+  ${panel({ x: 0, y: 0, width, height: streakHeight, title: "Contribution streak", at: 0, body: `${streakColumnsSvg}\n    ${strip}${underline}` })}
   ${panel({ x: 0, y: streakHeight + gap, width: half, height: lowerHeight, title: "GitHub stats", at: 0.15, body: statsBody })}
   ${panel({
     x: half + gap,

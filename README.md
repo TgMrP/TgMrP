@@ -9,6 +9,12 @@
   <a href="https://www.instagram.com/ran.tayar"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" alt="Instagram" /></a>
 </p>
 
+<p align="center">
+  <img src="metrics.stats.svg" alt="GitHub stats, contribution streak, most used languages and contribution calendar" width="100%" />
+</p>
+
+---
+
 ### 🧠 Languages
 
 <p>
@@ -136,10 +142,4 @@
   <img src="https://img.shields.io/badge/esbuild-FFCF00?style=flat-square&logo=esbuild&logoColor=black" alt="esbuild" />
   <img src="https://img.shields.io/badge/Figma-F24E1E?style=flat-square&logo=figma&logoColor=white" alt="Figma" />
   <img src="https://img.shields.io/badge/Postman-FF6C37?style=flat-square&logo=postman&logoColor=white" alt="Postman" />
-</p>
-
----
-
-<p align="center">
-  <img src="metrics.stats.svg" alt="GitHub stats, contribution streak, most used languages and contribution calendar" width="100%" />
 </p>
