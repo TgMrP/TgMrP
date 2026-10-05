@@ -141,14 +141,5 @@
 ---
 
 <p align="center">
-  <img src="metrics.stats.svg" alt="GitHub stats" width="49%" />
-  <img src="metrics.languages.svg" alt="Most used languages" width="49%" />
-</p>
-
-<p align="center">
-  <img src="metrics.streak.svg" alt="Contribution streak" width="49%" />
-</p>
-
-<p align="center">
-  <img src="metrics.overview.svg" alt="GitHub metrics" />
+  <img src="metrics.stats.svg" alt="GitHub stats, contribution streak, most used languages and contribution calendar" width="100%" />
 </p>
