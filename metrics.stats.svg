@@ -50,7 +50,7 @@
     <rect class="card" x="0.5" y="0.5" width="471" height="257" rx="8" />
     <text class="title" x="24" y="32">GitHub stats</text>
     <g class="slide" style="animation-delay: 0.45s"><text x="24" y="64">Contributions (all time)</text><text class="value" x="448" y="64" text-anchor="end">15,893</text></g>
-    <g class="slide" style="animation-delay: 0.51s"><text x="24" y="94">Commits</text><text class="value" x="448" y="94" text-anchor="end">13,170</text></g>
+    <g class="slide" style="animation-delay: 0.51s"><text x="24" y="94">Commits</text><text class="value" x="448" y="94" text-anchor="end">13,171</text></g>
     <g class="slide" style="animation-delay: 0.57s"><text x="24" y="124">Pull requests opened</text><text class="value" x="448" y="124" text-anchor="end">789</text></g>
     <g class="slide" style="animation-delay: 0.63s"><text x="24" y="154">Pull requests merged</text><text class="value" x="448" y="154" text-anchor="end">753</text></g>
     <g class="slide" style="animation-delay: 0.69s"><text x="24" y="184">Pull requests reviewed</text><text class="value" x="448" y="184" text-anchor="end">35</text></g>
