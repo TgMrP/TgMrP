@@ -30,25 +30,20 @@ jobs:
           base: header, repositories
           config_timezone: Asia/Jerusalem
           repositories_affiliations: owner, collaborator, organization_member
-          plugin_languages: yes
-          plugin_languages_sections: most-used
-          plugin_languages_limit: 8
-          plugin_languages_details: percentage
-          plugin_languages_ignored: html, css, scss, sass, shell, dockerfile, makefile, powershell
           plugin_isocalendar: yes
           plugin_isocalendar_duration: full-year
 
-      # All-time totals (PRs, reviews, commits) - lowlighter only counts the last year.
+      # All-time totals and languages - lowlighter only counts the last year and its languages list renders empty.
       - uses: actions/checkout@v4
       - run: node .github/scripts/stats.mjs
         env:
           METRICS_TOKEN: ${{ secrets.METRICS_TOKEN }}
-      - name: Commit stats card
+      - name: Commit stats cards
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add metrics.stats.svg
+          git add metrics.stats.svg metrics.languages.svg
           git diff --cached --quiet && exit 0
-          git commit -m "Update stats card"
+          git commit -m "Update stats cards"
           git pull --rebase
           git push

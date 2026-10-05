@@ -60,7 +60,7 @@ const stats = [
 
 const rowHeight = 30
 const width = 480
-const height = 56 + stats.length * rowHeight
+const height = 48 + stats.length * rowHeight
 const rows = stats
   .map(([label, value], i) => {
     const y = 64 + i * rowHeight
@@ -73,12 +73,15 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${
     text { font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #57606a; }
     .title { font-size: 18px; font-weight: 600; fill: #0969da; }
     .value { font-weight: 600; fill: #1f2328; }
+    .card { fill: #ffffff; stroke: #d0d7de; }
     @media (prefers-color-scheme: dark) {
+      .card { fill: #0d1117; stroke: #30363d; }
       text { fill: #9198a1; }
       .title { fill: #4493f8; }
       .value { fill: #f0f6fc; }
     }
   </style>
+  <rect class="card" x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="8" />
   <text class="title" x="24" y="32">GitHub stats</text>
   ${rows}
 </svg>
@@ -86,3 +89,63 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${
 
 await writeFile("metrics.stats.svg", svg)
 console.log(Object.fromEntries(stats))
+
+// Languages by bytes across owned, collaborator and organization repositories.
+const ignoredLanguages = new Set(["HTML", "CSS", "SCSS", "Sass", "Shell", "Dockerfile", "Makefile", "PowerShell"])
+const bytes = new Map()
+let cursor = null
+do {
+  const { user: page } = await graphql(
+    `query($login: String!, $cursor: String) { user(login: $login) {
+      repositories(first: 100, after: $cursor, isFork: false, ownerAffiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER]) {
+        pageInfo { hasNextPage endCursor }
+        nodes { languages(first: 20) { edges { size node { name color } } } }
+      }
+    } }`,
+    { login, cursor },
+  )
+  for (const repo of page.repositories.nodes) {
+    for (const { size, node } of repo.languages.edges) {
+      if (ignoredLanguages.has(node.name)) continue
+      const entry = bytes.get(node.name) ?? { size: 0, color: node.color ?? "#8b949e" }
+      entry.size += size
+      bytes.set(node.name, entry)
+    }
+  }
+  cursor = page.repositories.pageInfo.hasNextPage ? page.repositories.pageInfo.endCursor : null
+} while (cursor)
+
+const top = [...bytes].sort(([, a], [, b]) => b.size - a.size).slice(0, 8)
+const topTotal = top.reduce((sum, [, { size }]) => sum + size, 0)
+const barWidth = width - 48
+let barX = 24
+const segments = top
+  .map(([, { size, color }]) => {
+    const w = (size / topTotal) * barWidth
+    const rect = `<rect x="${barX.toFixed(2)}" y="48" width="${w.toFixed(2)}" height="10" fill="${color}" />`
+    barX += w
+    return rect
+  })
+  .join("")
+const legend = top
+  .map(([name, { size, color }], i) => {
+    const x = 24 + (i % 2) * (barWidth / 2)
+    const y = 88 + Math.floor(i / 2) * 26
+    const percent = ((size / topTotal) * 100).toFixed(1)
+    return `<circle cx="${x + 5}" cy="${y - 5}" r="5" fill="${color}" /><text x="${x + 16}" y="${y}">${name} <tspan class="value">${percent}%</tspan></text>`
+  })
+  .join("\n  ")
+const langHeight = 80 + Math.ceil(top.length / 2) * 26
+
+const languagesSvg = svg
+  .replace(/height="\d+" viewBox="0 0 (\d+) \d+"/, `height="${langHeight}" viewBox="0 0 $1 ${langHeight}"`)
+  .replace(/aria-label="[^"]*"/, `aria-label="Most used languages for ${login}"`)
+  .replace(/<rect class="card"[\s\S]*<\/svg>/, `<rect class="card" x="0.5" y="0.5" width="${width - 1}" height="${langHeight - 1}" rx="8" />
+  <text class="title" x="24" y="32">Most used languages</text>
+  <clipPath id="bar"><rect x="24" y="48" width="${barWidth}" height="10" rx="5" /></clipPath>
+  <g clip-path="url(#bar)">${segments}</g>
+  ${legend}
+</svg>`)
+
+await writeFile("metrics.languages.svg", languagesSvg)
+console.log(Object.fromEntries(top.map(([name, { size }]) => [name, size])))

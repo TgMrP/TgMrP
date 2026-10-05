@@ -75,7 +75,8 @@
 ---
 
 <p align="center">
-  <img src="metrics.stats.svg" alt="GitHub stats" />
+  <img src="metrics.stats.svg" alt="GitHub stats" width="49%" />
+  <img src="metrics.languages.svg" alt="Most used languages" width="49%" />
 </p>
 
 <p align="center">
