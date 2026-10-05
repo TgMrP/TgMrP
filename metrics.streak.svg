@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="156" viewBox="0 0 480 156" role="img" aria-label="Contribution streak for TgMrP">
+  <style>
+    text { font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #57606a; }
+    .title { font-size: 18px; font-weight: 600; fill: #0969da; }
+    .value { font-weight: 600; fill: #1f2328; }
+    .big { font-size: 30px; font-weight: 700; fill: #1f2328; }
+    .accent { fill: #1a7f37; }
+    .muted { font-size: 12px; fill: #8c959f; }
+    .card { fill: #ffffff; stroke: #d0d7de; }
+    .divider { stroke: #d0d7de; }
+    @media (prefers-color-scheme: dark) {
+      .card { fill: #0d1117; stroke: #30363d; }
+      .divider { stroke: #30363d; }
+      text { fill: #9198a1; }
+      .title { fill: #4493f8; }
+      .value, .big { fill: #f0f6fc; }
+      .accent { fill: #3fb950; }
+      .muted { fill: #6e7681; }
+    }
+  </style>
+  <rect class="card" x="0.5" y="0.5" width="479" height="155" rx="8" />
+  <text class="title" x="24" y="32">Contribution streak</text>
+  <text class="big " x="80" y="92" text-anchor="middle">15,893</text><text x="80" y="116" text-anchor="middle">Total contributions</text><text class="muted" x="80" y="134" text-anchor="middle">Since Jun 10, 2020</text>
+  <line class="divider" x1="160" y1="56" x2="160" y2="136" /><text class="big accent" x="240" y="92" text-anchor="middle">10 days</text><text x="240" y="116" text-anchor="middle">Current streak</text><text class="muted" x="240" y="134" text-anchor="middle">Sep 26, 2026 - Oct 5, 2026</text>
+  <line class="divider" x1="320" y1="56" x2="320" y2="136" /><text class="big " x="400" y="92" text-anchor="middle">27 days</text><text x="400" y="116" text-anchor="middle">Longest streak</text><text class="muted" x="400" y="134" text-anchor="middle">Aug 8, 2026 - Sep 3, 2026</text>
+</svg>

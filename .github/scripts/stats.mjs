@@ -1,5 +1,6 @@
-// Renders metrics.stats.svg with all-time totals, including private repositories.
-// lowlighter/metrics only counts the last year of activity, so PRs and reviews come out far too low.
+// Renders metrics.stats.svg, metrics.streak.svg and metrics.languages.svg, including private repositories.
+// lowlighter/metrics only counts the last year of activity, so PRs and reviews come out far too low,
+// and the public streak service is too slow for GitHub's image proxy and only sees public contributions.
 import { writeFile } from "node:fs/promises"
 
 const token = process.env.METRICS_TOKEN
@@ -24,20 +25,39 @@ const graphql = async (query, variables) => {
 const searchCount = async (q, type = "issues") =>
   (await gh(`/search/${type}?per_page=1&q=${encodeURIComponent(q)}`)).total_count
 
-async function allTimeContributions(createdAt) {
-  let total = 0
+async function contributionDays(createdAt) {
+  const days = []
   for (let year = new Date(createdAt).getUTCFullYear(); year <= new Date().getUTCFullYear(); year++) {
     const { user } = await graphql(
       `query($login: String!, $from: DateTime!, $to: DateTime!) {
         user(login: $login) { contributionsCollection(from: $from, to: $to) {
-          contributionCalendar { totalContributions }
+          contributionCalendar { weeks { contributionDays { date contributionCount } } }
         } }
       }`,
       { login, from: `${year}-01-01T00:00:00Z`, to: `${year}-12-31T23:59:59Z` },
     )
-    total += user.contributionsCollection.contributionCalendar.totalContributions
+    for (const week of user.contributionsCollection.contributionCalendar.weeks) days.push(...week.contributionDays)
   }
-  return total
+  const today = new Date().toISOString().slice(0, 10)
+  return days.filter(({ date }) => date <= today)
+}
+
+// A streak that has not been extended yet today still counts as current.
+function streaks(days) {
+  let longest = { length: 0 }
+  let run = { length: 0 }
+  for (const { date, contributionCount } of days) {
+    if (contributionCount === 0) {
+      run = { length: 0 }
+      continue
+    }
+    run = run.length ? { ...run, length: run.length + 1, end: date } : { length: 1, start: date, end: date }
+    if (run.length > longest.length) longest = run
+  }
+  const last = days.at(-1)
+  const yesterday = days.at(-2)
+  const current = run.length && (run.end === last?.date || run.end === yesterday?.date) ? run : { length: 0 }
+  return { current, longest }
 }
 
 const { user } = await graphql(
@@ -48,8 +68,11 @@ const { user } = await graphql(
   { login },
 )
 
+const days = await contributionDays(user.createdAt)
+const totalContributions = days.reduce((sum, { contributionCount }) => sum + contributionCount, 0)
+
 const stats = [
-  ["Contributions (all time)", await allTimeContributions(user.createdAt)],
+  ["Contributions (all time)", totalContributions],
   ["Commits", await searchCount(`author:${login}`, "commits")],
   ["Pull requests opened", await searchCount(`author:${login} is:pr`)],
   ["Pull requests merged", await searchCount(`author:${login} is:pr is:merged`)],
@@ -58,9 +81,34 @@ const stats = [
   ["Repositories", user.repositories.totalCount],
 ]
 
-const rowHeight = 30
 const width = 480
-const height = 48 + stats.length * rowHeight
+const card = ({ width, height, label, title, body }) => `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${label}">
+  <style>
+    text { font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #57606a; }
+    .title { font-size: 18px; font-weight: 600; fill: #0969da; }
+    .value { font-weight: 600; fill: #1f2328; }
+    .big { font-size: 30px; font-weight: 700; fill: #1f2328; }
+    .accent { fill: #1a7f37; }
+    .muted { font-size: 12px; fill: #8c959f; }
+    .card { fill: #ffffff; stroke: #d0d7de; }
+    .divider { stroke: #d0d7de; }
+    @media (prefers-color-scheme: dark) {
+      .card { fill: #0d1117; stroke: #30363d; }
+      .divider { stroke: #30363d; }
+      text { fill: #9198a1; }
+      .title { fill: #4493f8; }
+      .value, .big { fill: #f0f6fc; }
+      .accent { fill: #3fb950; }
+      .muted { fill: #6e7681; }
+    }
+  </style>
+  <rect class="card" x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="8" />
+  <text class="title" x="24" y="32">${title}</text>
+  ${body}
+</svg>
+`
+
+const rowHeight = 30
 const rows = stats
   .map(([label, value], i) => {
     const y = 64 + i * rowHeight
@@ -68,27 +116,39 @@ const rows = stats
   })
   .join("\n  ")
 
-const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="GitHub stats for ${login}">
-  <style>
-    text { font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #57606a; }
-    .title { font-size: 18px; font-weight: 600; fill: #0969da; }
-    .value { font-weight: 600; fill: #1f2328; }
-    .card { fill: #ffffff; stroke: #d0d7de; }
-    @media (prefers-color-scheme: dark) {
-      .card { fill: #0d1117; stroke: #30363d; }
-      text { fill: #9198a1; }
-      .title { fill: #4493f8; }
-      .value { fill: #f0f6fc; }
-    }
-  </style>
-  <rect class="card" x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="8" />
-  <text class="title" x="24" y="32">GitHub stats</text>
-  ${rows}
-</svg>
-`
-
+const svg = card({
+  width,
+  height: 48 + stats.length * rowHeight,
+  label: `GitHub stats for ${login}`,
+  title: "GitHub stats",
+  body: rows,
+})
 await writeFile("metrics.stats.svg", svg)
 console.log(Object.fromEntries(stats))
+
+const { current, longest } = streaks(days)
+const formatDate = (date) =>
+  new Date(`${date}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })
+const range = (streak) => (streak.length ? `${formatDate(streak.start)} - ${formatDate(streak.end)}` : "No active streak")
+const streakColumns = [
+  ["Total contributions", totalContributions.toLocaleString("en-US"), `Since ${formatDate(user.createdAt.slice(0, 10))}`],
+  ["Current streak", `${current.length} days`, range(current), "accent"],
+  ["Longest streak", `${longest.length} days`, range(longest)],
+]
+const columnWidth = width / streakColumns.length
+const streakBody = streakColumns
+  .map(([label, value, detail, extra = ""], i) => {
+    const x = columnWidth * i + columnWidth / 2
+    const divider = i ? `<line class="divider" x1="${columnWidth * i}" y1="56" x2="${columnWidth * i}" y2="136" />` : ""
+    return `${divider}<text class="big ${extra}" x="${x}" y="92" text-anchor="middle">${value}</text><text x="${x}" y="116" text-anchor="middle">${label}</text><text class="muted" x="${x}" y="134" text-anchor="middle">${detail}</text>`
+  })
+  .join("\n  ")
+
+await writeFile(
+  "metrics.streak.svg",
+  card({ width, height: 156, label: `Contribution streak for ${login}`, title: "Contribution streak", body: streakBody }),
+)
+console.log({ current, longest })
 
 // Languages by bytes across owned, collaborator and organization repositories.
 const ignoredLanguages = new Set(["HTML", "CSS", "SCSS", "Sass", "Shell", "Dockerfile", "Makefile", "PowerShell"])
@@ -135,17 +195,16 @@ const legend = top
     return `<circle cx="${x + 5}" cy="${y - 5}" r="5" fill="${color}" /><text x="${x + 16}" y="${y}">${name} <tspan class="value">${percent}%</tspan></text>`
   })
   .join("\n  ")
-const langHeight = 80 + Math.ceil(top.length / 2) * 26
 
-const languagesSvg = svg
-  .replace(/height="\d+" viewBox="0 0 (\d+) \d+"/, `height="${langHeight}" viewBox="0 0 $1 ${langHeight}"`)
-  .replace(/aria-label="[^"]*"/, `aria-label="Most used languages for ${login}"`)
-  .replace(/<rect class="card"[\s\S]*<\/svg>/, `<rect class="card" x="0.5" y="0.5" width="${width - 1}" height="${langHeight - 1}" rx="8" />
-  <text class="title" x="24" y="32">Most used languages</text>
-  <clipPath id="bar"><rect x="24" y="48" width="${barWidth}" height="10" rx="5" /></clipPath>
+const languagesSvg = card({
+  width,
+  height: 80 + Math.ceil(top.length / 2) * 26,
+  label: `Most used languages for ${login}`,
+  title: "Most used languages",
+  body: `<clipPath id="bar"><rect x="24" y="48" width="${barWidth}" height="10" rx="5" /></clipPath>
   <g clip-path="url(#bar)">${segments}</g>
-  ${legend}
-</svg>`)
+  ${legend}`,
+})
 
 await writeFile("metrics.languages.svg", languagesSvg)
 console.log(Object.fromEntries(top.map(([name, { size }]) => [name, size])))
