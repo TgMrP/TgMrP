@@ -3,18 +3,25 @@
     text { font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #57606a; }
     .title { font-size: 18px; font-weight: 600; fill: #0969da; }
     .value { font-weight: 600; fill: #1f2328; }
+    .big { font-size: 30px; font-weight: 700; fill: #1f2328; }
+    .accent { fill: #1a7f37; }
+    .muted { font-size: 12px; fill: #8c959f; }
     .card { fill: #ffffff; stroke: #d0d7de; }
+    .divider { stroke: #d0d7de; }
     @media (prefers-color-scheme: dark) {
       .card { fill: #0d1117; stroke: #30363d; }
+      .divider { stroke: #30363d; }
       text { fill: #9198a1; }
       .title { fill: #4493f8; }
-      .value { fill: #f0f6fc; }
+      .value, .big { fill: #f0f6fc; }
+      .accent { fill: #3fb950; }
+      .muted { fill: #6e7681; }
     }
   </style>
   <rect class="card" x="0.5" y="0.5" width="479" height="257" rx="8" />
   <text class="title" x="24" y="32">GitHub stats</text>
-  <text class="label" x="24" y="64">Contributions (all time)</text><text class="value" x="456" y="64" text-anchor="end">15,892</text>
-  <text class="label" x="24" y="94">Commits</text><text class="value" x="456" y="94" text-anchor="end">13,169</text>
+  <text class="label" x="24" y="64">Contributions (all time)</text><text class="value" x="456" y="64" text-anchor="end">15,893</text>
+  <text class="label" x="24" y="94">Commits</text><text class="value" x="456" y="94" text-anchor="end">13,170</text>
   <text class="label" x="24" y="124">Pull requests opened</text><text class="value" x="456" y="124" text-anchor="end">789</text>
   <text class="label" x="24" y="154">Pull requests merged</text><text class="value" x="456" y="154" text-anchor="end">753</text>
   <text class="label" x="24" y="184">Pull requests reviewed</text><text class="value" x="456" y="184" text-anchor="end">35</text>
