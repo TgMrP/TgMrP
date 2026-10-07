@@ -44,9 +44,11 @@ async function contributionDays(createdAt) {
   return days.filter(({ date }) => date <= today)
 }
 
-// A streak that has not been extended yet today still counts as current.
+// A streak that has not been extended yet today still counts as current, so the latest run is remembered
+// before an empty day resets the running one.
 function streaks(days) {
   let longest = { length: 0 }
+  let latest = { length: 0 }
   let run = { length: 0 }
   for (const { date, contributionCount } of days) {
     if (contributionCount === 0) {
@@ -54,11 +56,12 @@ function streaks(days) {
       continue
     }
     run = run.length ? { ...run, length: run.length + 1, end: date } : { length: 1, start: date, end: date }
+    latest = run
     if (run.length > longest.length) longest = run
   }
-  const last = days.at(-1)
-  const yesterday = days.at(-2)
-  const current = run.length && (run.end === last?.date || run.end === yesterday?.date) ? run : { length: 0 }
+  const today = days.at(-1)?.date
+  const yesterday = days.at(-2)?.date
+  const current = latest.length && (latest.end === today || latest.end === yesterday) ? latest : { length: 0 }
   return { current, longest }
 }
 
@@ -194,12 +197,13 @@ const strip = recent
     return `<rect class="cell l${level(contributionCount)}" x="${x}" y="150" width="${(cellStep - 3).toFixed(2)}" height="14" rx="3" ${delay(0.45 + i * 0.012)}><title>${date}: ${contributionCount}</title></rect>`
   })
   .join("")
-// Then a line is drawn under the days of the current streak.
-const streakCells = Math.min(current.length, recent.length)
+// Then a line is drawn under the days of the current streak, which may end yesterday.
+const streakEnd = recent.findIndex(({ date }) => date === current.end) + 1
+const streakCells = Math.min(current.length, streakEnd)
 const underline = streakCells
   ? (() => {
-      const x1 = 24 + (recent.length - streakCells) * cellStep
-      const x2 = 24 + recent.length * cellStep - 3
+      const x1 = 24 + (streakEnd - streakCells) * cellStep
+      const x2 = 24 + streakEnd * cellStep - 3
       return `<line class="draw accent-stroke" x1="${x1.toFixed(1)}" y1="172" x2="${x2.toFixed(1)}" y2="172" pathLength="1" ${delay(1.35)} />`
     })()
   : ""
